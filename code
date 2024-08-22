@@ -1,0 +1,29 @@
+from flask import Flask, render_template, request, send_file
+import pandas as pd
+import os
+
+app = Flask(__name__)
+
+@app.route('/', methods=['GET', 'POST'])
+def upload_files():
+    if request.method == 'POST':
+        today_file = request.files['today_file']
+        yesterday_file = request.files['yesterday_file']
+
+        # Read the uploaded Excel files into DataFrames
+        today_df = pd.read_excel(today_file)
+        yesterday_df = pd.read_excel(yesterday_file)
+
+        # Find differences
+        diff_df = pd.concat([today_df, yesterday_df]).drop_duplicates(keep=False)
+
+        # Save the differences to an Excel file
+        diff_file_path = 'differences.xlsx'
+        diff_df.to_excel(diff_file_path, index=False)
+
+        return send_file(diff_file_path, as_attachment=True)
+
+    return render_template('index.html')
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
